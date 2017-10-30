@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -82,13 +83,13 @@ public class MainActivity extends AppCompatActivity {
             mEditor.commit();
         }
 
-        final String gate = mSharedPreferences.getString("gate", "");
-        Log.d(TAG, "GATE: " + gate);
-
         mScan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (gate.equals("")){
+                final Set<String> scanned = mSharedPreferences.getStringSet("scanned", null);
+                Log.d(TAG, "Scanned: " + scanned);
+
+                if (scanned == null){
                     Intent intent = new Intent(MainActivity.this, ScanActivity.class);
                     startActivity(intent);
                 } else {
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void clearSharedPreferences(){
         mEditor.putStringSet("scanned", null);
-        mEditor.putString("gate", "");
+        //mEditor.putString("gate", "");
         mEditor.putString("formattedData", "");
         mEditor.putString("lat", "");
         mEditor.putString("lon", "");
@@ -162,12 +163,11 @@ public class MainActivity extends AppCompatActivity {
         JSONObject data = new JSONObject();
 
         try {
-            data.put("puerta", mSharedPreferences.getString("gate", ""));
+            //data.put("puerta", mSharedPreferences.getString("gate", ""));
             data.put("scannerId", mSharedPreferences.getString("imei", ""));
             data.put("date", getDate());
             data.put("lat", mSharedPreferences.getString("lat", ""));
             data.put("lon", mSharedPreferences.getString("lon", ""));
-
             data.put("scanned", new JSONArray((new ArrayList<String>(mSharedPreferences.getStringSet("scanned", null))).toString()));
             Log.d(TAG, data.toString());
 
@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
 
         Request request = new Request.Builder()
                 .post(body)
-                .url("http://drongeic.mx:8080/movilidad/qr.php")
+                .url("http://drongeic.mx:8080/movilidad/qr2.php")
                 .build();
 
         Call call = client.newCall(request);
@@ -219,11 +219,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String data = response.body().string();
+                //Log.d(TAG, "RESPONSE: " + response);
+                //Log.d(TAG, "RESPONSE BODY: " + response.body());
 
                 if (mProgressDialog.isShowing()) {
                     mProgressDialog.dismiss();
                 }
-
                 if (response.isSuccessful()){
 
                     Log.d(TAG, "Call Response: " + data);
@@ -236,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
                                 public void run() {
                                     //too chido
                                     clearSharedPreferences();
-                                    Toast.makeText(MainActivity.this, "Todo chido", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "Solicitud exitosa", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         } else {
@@ -249,6 +250,13 @@ public class MainActivity extends AppCompatActivity {
                             });
                         }
                     } catch (Exception e){
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                //sigue intentando
+                                Toast.makeText(MainActivity.this, "Algo falló, intenta más tarde", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                         e.printStackTrace();
                     }
 

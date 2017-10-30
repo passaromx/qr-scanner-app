@@ -159,7 +159,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
                 //fallback data save
                 try {
                     JSONObject data = new JSONObject();
-                    data.put("puerta", mGate.getText());
+                    //data.put("puerta", mGate.getText());
                     data.put("scannerId", mSharedPreferences.getString("imei", ""));
                     data.put("date", getDate());
                     data.put("lat", String.valueOf(mLat));
@@ -181,14 +181,14 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
             }
         });
 
-        String gate = mSharedPreferences.getString("gate", "");
+        /*String gate = mSharedPreferences.getString("gate", "");
         if (gate.equals("")) {
             mProgressDialog = ProgressDialog.show(ScanActivity.this, "Cargando...", "Un momento por favor", true);
             getDataAndShowAlert();
         } else {
             mGate.setText(gate);
         }
-        //algo
+        */
 
     }
 
@@ -373,7 +373,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
 
         Request request = new Request.Builder()
                 .post(body)
-                .url("http://drongeic.mx:8080/movilidad/qr.php")
+                .url("http://drongeic.mx:8080/movilidad/qr2.php")
                 .build();
 
         Call call = client.newCall(request);
@@ -442,6 +442,16 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
                         }
                     } catch (Exception e){
                         e.printStackTrace();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                vibrate("fail");
+                                mStatus.setText(R.string.scan_fail);
+                                mStatus.setTextColor(Color.parseColor("#C62828"));
+                                //Failed alert
+                                uploadAlert("fail");
+                            }
+                        });
                     }
 
                 }
@@ -451,7 +461,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
 
     public void clearSharedPreferences(){
         mEditor.putStringSet("scanned", null);
-        mEditor.putString("gate", "");
+        //mEditor.putString("gate", "");
         mEditor.putString("formattedData", "");
         mEditor.putString("lat", "");
         mEditor.putString("lon", "");
