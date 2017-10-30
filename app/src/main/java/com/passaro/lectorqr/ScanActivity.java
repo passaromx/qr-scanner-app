@@ -188,6 +188,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
         } else {
             mGate.setText(gate);
         }
+        //algo
 
     }
 
