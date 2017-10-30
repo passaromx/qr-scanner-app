@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">GeoScanner</string>
+    <string name="scan_success">Dispositivo registrado</string>
+    <string name="scan_duplicate">Registro duplicado</string>
+    <string name="scan_fail">Error de registro</string>
+    <string name="no_network">Sin conexión</string>
+</resources>
