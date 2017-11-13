@@ -32,6 +32,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
 
@@ -61,7 +62,7 @@ import okhttp3.Response;
 
 public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.OnQRCodeReadListener {
 
-    private TextView mImei, mStatus, mGate;
+    private TextView mImei, mStatus, mGate, mPhone, mSIM;
     private QRCodeReaderView qrCodeReaderView;
     private ArrayList<String> mScannedImei;
     private JSONArray mScanned;
@@ -89,6 +90,9 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
         mGate = (TextView) findViewById(R.id.gateLabel);
         mFinish = (Button) findViewById(R.id.endSessionBtn);
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
+        mPhone = (TextView) findViewById(R.id.phoneLabel);
+        mSIM = (TextView) findViewById(R.id.serialLabel);
+
 
         mSharedPreferences = getSharedPreferences(SCAN_INFO, MODE_PRIVATE);
         mEditor = mSharedPreferences.edit();
@@ -171,6 +175,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
 
                     if (isNetworkAvailable()) {
                         uploadScan(data.toString());
+
                     } else {
                         noNetworkAlert();
                     }
@@ -207,16 +212,28 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
 
     @Override
     public void onQRCodeRead(String text, PointF[] points) {
-        if (!mScan.equals(text) && !text.equals("No QR Code found")) {
-            mScan = text;
-            if (text.length() >= 14 && text.length() <= 15) {
-                mImei.setText(text);
-                if (!mScannedImei.contains(text)){
+        if (!mScan.equals(text.replace("%2F", "/")) && !text.equals("No QR Code found")) {
+            mScan = text.replace("%2F", "/");
+            Log.d(TAG, "Scanned: " + mScan);
+            String[] info = mScan.split("/");
+            String imei = info[0];
+            Log.d(TAG, "IMEI: " + imei);
+            if (imei.length() >= 14 && imei.length() <= 15) {
+                mImei.setText(imei);
+                String phone = info[2];
+                String serial = info[1];
+                if (phone.equals("0")) { phone = "n/a";}
+                if (serial.equals("0")) { serial = "n/a"; }
+
+                mSIM.setText(serial);
+                mPhone.setText(phone);
+
+                if (!mScannedImei.contains("\"" + mScan + "\"")){
                     vibrate("success");
                     mStatus.setText(R.string.scan_success);
                     mStatus.setTextColor(Color.parseColor("#2E7D32"));
                     //Log.d(TAG, "NEW IMEI: " + text);
-                    mScannedImei.add(mScan);
+                    mScannedImei.add("\"" + mScan + "\"");
                     Log.d(TAG, "SCANNED: " + mScannedImei.toString());
                     //save to shared new array
                     /*String[] scans = new String[mScannedImei.size()];
@@ -373,7 +390,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
 
         Request request = new Request.Builder()
                 .post(body)
-                .url("http://drongeic.mx:8080/movilidad/qr2.php")
+                .url("http://drongeic.mx:8080/movilidad/qr3.php")
                 .build();
 
         Call call = client.newCall(request);
@@ -399,7 +416,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                String data = response.body().string();
+                final String data = response.body().string();
 
                 if (response.isSuccessful()){
                     runOnUiThread(new Runnable() {
@@ -407,6 +424,7 @@ public class ScanActivity extends AppCompatActivity implements QRCodeReaderView.
                         public void run() {
                             mStatus.setVisibility(View.VISIBLE);
                             mProgressBar.setVisibility(View.GONE);
+                            Toast.makeText(ScanActivity.this, "RESPONSE: " + data, Toast.LENGTH_LONG).show();
                         }
                     });
 

@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         mScan = (FloatingActionButton) findViewById(R.id.fab);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -76,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
 
         mSharedPreferences = getSharedPreferences(SCAN_INFO, MODE_PRIVATE);
         mEditor = mSharedPreferences.edit();
-        //clearSharedPreferences();
+        clearSharedPreferences();
         String imei = mSharedPreferences.getString("imei", "");
         if (imei.equals("")){
             mEditor.putString("imei", getDeviceId());
@@ -161,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
 
     public String createUploadJson() {
         JSONObject data = new JSONObject();
+        Log.d(TAG, mSharedPreferences.getStringSet("scanned", null).toString());
 
         try {
             //data.put("puerta", mSharedPreferences.getString("gate", ""));
@@ -195,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
         Request request = new Request.Builder()
                 .post(body)
-                .url("http://drongeic.mx:8080/movilidad/qr2.php")
+                .url("http://drongeic.mx:8080/movilidad/qr3.php")
                 .build();
 
         Call call = client.newCall(request);
@@ -218,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                String data = response.body().string();
+                final String data = response.body().string();
                 //Log.d(TAG, "RESPONSE: " + response);
                 //Log.d(TAG, "RESPONSE BODY: " + response.body());
 
@@ -228,6 +230,12 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful()){
 
                     Log.d(TAG, "Call Response: " + data);
+                    /*runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "RESPONSE: " + data, Toast.LENGTH_LONG).show();
+                        }
+                    }); */
                     try {
                         JSONObject res = new JSONObject(data);
                         if (res.get("status").toString().equals("OK")){
@@ -254,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 //sigue intentando
-                                Toast.makeText(MainActivity.this, "Algo falló, intenta más tarde", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, "Error de comunicación", Toast.LENGTH_SHORT).show();
                             }
                         });
                         e.printStackTrace();
